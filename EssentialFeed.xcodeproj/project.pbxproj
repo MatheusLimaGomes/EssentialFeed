@@ -82,7 +82,6 @@
 				7BE179652B717C6D00DDE6A3 /* EssentialFeed.docc */,
 				7BE179802B72870000DDE6A3 /* Feed API */,
 				7BE1797F2B726DC700DDE6A3 /* Feed Feature */,
-				7BE179872B75178F00DDE6A3 /* FeedItemsMapper.swift */,
 			);
 			path = EssentialFeed;
 			sourceTree = "<group>";
@@ -109,6 +108,7 @@
 			children = (
 				7BE179812B72874B00DDE6A3 /* RemoteFeedLoader.swift */,
 				7BE179832B7516FD00DDE6A3 /* HTTPClient.swift */,
+				7BE179872B75178F00DDE6A3 /* FeedItemsMapper.swift */,
 			);
 			path = "Feed API";
 			sourceTree = "<group>";
