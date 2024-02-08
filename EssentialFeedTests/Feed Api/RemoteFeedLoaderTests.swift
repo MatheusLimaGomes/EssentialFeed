@@ -32,7 +32,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let (sut, client) = makeSUT()
         expect(
             sut: sut,
-            tocompleteWith: .failure(RemoteFeedLoader.Error.connectivity)
+            tocompleteWith: failure(RemoteFeedLoader.Error.connectivity)
         ) {
             let clientError = NSError(domain: "Test", code: 0)
             client.complete(with: clientError)
@@ -44,7 +44,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
         let samples = [199, 201, 400, 500]
 
         samples.enumerated().forEach { index, code in
-            expect(sut: sut, tocompleteWith: .failure(RemoteFeedLoader.Error.invalidData)) {
+            expect(sut: sut, tocompleteWith: failure(RemoteFeedLoader.Error.invalidData)) {
                 let json = makeItemsJson([])
                 client.complete(withStatusCode: code, data: json, at: index)
             }
@@ -52,7 +52,7 @@ final class RemoteFeedLoaderTests: XCTestCase {
     }
     func test_load_deliversErrorOn200HTTPResponseWithInvalidJson() {
         let (sut, client) = makeSUT()
-        expect(sut: sut, tocompleteWith: .failure(RemoteFeedLoader.Error.invalidData) ) {
+        expect(sut: sut, tocompleteWith: failure(RemoteFeedLoader.Error.invalidData) ) {
             let invalidJson = Data("invalid_json".utf8)
             client.complete(withStatusCode: 200, data: invalidJson)
         }
@@ -110,6 +110,9 @@ extension RemoteFeedLoaderTests {
         trackForMemoryLeaks(instance: sut, file: file, line: line)
         trackForMemoryLeaks(instance: client, file: file, line: line)
         return (sut, client)
+    }
+    func failure(_ error: RemoteFeedLoader.Error) -> RemoteFeedLoader.Result {
+        return .failure(error)
     }
     func trackForMemoryLeaks(
         instance: AnyObject,
@@ -171,7 +174,7 @@ extension RemoteFeedLoaderTests {
             messages.append((url,completion))
         }
         func complete(with error: Error, at index: Int = 0) {
-            messages[index].completion(.failure(error  ))
+            messages[index].completion(.failure(error))
         }
         func complete(withStatusCode code: Int, data: Data,  at index: Int = 0) {
             let response = HTTPURLResponse(
