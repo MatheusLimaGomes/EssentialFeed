@@ -114,15 +114,6 @@ extension RemoteFeedLoaderTests {
     func failure(_ error: RemoteFeedLoader.Error) -> RemoteFeedLoader.Result {
         return .failure(error)
     }
-    func trackForMemoryLeaks(
-        instance: AnyObject,
-        file: StaticString = #filePath,
-        line: UInt = #line
-    ) {
-        addTeardownBlock { [weak instance] in
-            XCTAssertNil(instance, "Instance should have been deallocatad. Potential memory leak.", file: file, line: line)
-        }
-    }
     func makeItem(
         id: UUID, description: String? = nil,
         location: String? = nil, imageURL: URL
