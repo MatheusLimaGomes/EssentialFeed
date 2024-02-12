@@ -16,6 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
+      with:
+        xcode-version: '15.1'
     - name: Build and test
       run: xcodebuild clean build test -project EssentialFeed.xcodeproj -scheme "CI" CODE_SIGN_IDENTITY="" CODE_SIGNINGN_REQUIRED=NO
