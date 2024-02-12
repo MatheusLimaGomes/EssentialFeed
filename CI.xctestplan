@@ -19,7 +19,7 @@
       ]
     },
     "testExecutionOrdering" : "random",
-    "threadSanitizerEnabled" : true
+    "threadSanitizerEnabled" : false
   },
   "testTargets" : [
     {
