@@ -16,9 +16,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Select Xcode
-    run: sudo xcode-select -switch /Aplications/Xcode_15.1.app
     
     - name: Build and test
-    run: xcodebuild clean build test -project EssentialFeed.xcodeproj -scheme "CI"
+      run: xcodebuild clean build test -project EssentialFeed.xcodeproj -scheme "CI"
