@@ -33,10 +33,11 @@ final class CacheFeedUseCaseTests: XCTestCase {
         
         XCTAssertEqual(store.deleteCachedFeedCallCount, 0)
     }
-    func test_save_requestesCacheDeletion() {
+    func test_save_requestesCacheDeletion(file: StaticString = #filePath, line: UInt = #line) {
         let items = [uniqueItem(), uniqueItem()]
         let (sut, store) = makeSUT()
-        
+        trackForMemoryLeaks(instance: sut, file: file, line: line)
+        trackForMemoryLeaks(instance: store, file: file, line: line)
         sut.save(items)
         
         XCTAssertEqual(store.deleteCachedFeedCallCount, 1)
