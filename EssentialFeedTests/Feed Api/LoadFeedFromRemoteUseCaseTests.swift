@@ -84,7 +84,7 @@ final class LoadFeedFromRemoteUseCaseTests: XCTestCase {
     }
     func test_load_doesNotDeliverResultAfterSutInstanceHasBeenDeallocaterd() {
         let url = URL(string: "http://any-url.com")!
-        let client = HTTPClientSPy()
+        let client = HTTPClientSpy()
         var sut: RemoteFeedLoader? = .init(client: client, url: url)
         var capturedResults = [RemoteFeedLoader.Result]()
         sut?.load { capturedResults.append($0)}
@@ -104,8 +104,8 @@ extension LoadFeedFromRemoteUseCaseTests {
         url: URL = URL(string: "https://a-url.com")!,
         file: StaticString = #filePath,
         line: UInt = #line
-    ) -> (sut: RemoteFeedLoader, client: HTTPClientSPy) {
-        let client = HTTPClientSPy()
+    ) -> (sut: RemoteFeedLoader, client: HTTPClientSpy) {
+        let client = HTTPClientSpy()
         let sut = RemoteFeedLoader(client: client, url: url)
         trackForMemoryLeaks(instance: sut, file: file, line: line)
         trackForMemoryLeaks(instance: client, file: file, line: line)
@@ -152,30 +152,7 @@ extension LoadFeedFromRemoteUseCaseTests {
             exp.fulfill()
         }
         action()
-        wait(for: [exp], timeout: 1.0)
-    }
-    private class HTTPClientSPy: HTTPClient {
-        private var messages = [(url: URL, completion: (HTTPClientResult) -> Void)]()
-        var requestedURLs: [URL] {
-            return messages.map {$0.url}
-        }
-        var completions = [(Error) -> Void]()
-        
-        func get(from url: URL, completion: @escaping (HTTPClientResult) -> Void) {
-            messages.append((url,completion))
-        }
-        func complete(with error: Error, at index: Int = 0) {
-            messages[index].completion(.failure(error))
-        }
-        func complete(withStatusCode code: Int, data: Data,  at index: Int = 0) {
-            let response = HTTPURLResponse(
-                url: requestedURLs[index],
-                statusCode: code,
-                httpVersion: nil,
-                headerFields: nil
-            )!
-            messages[index].completion(.success(data, response))
-        }
+        waitForExpectations(timeout: 0.1)
     }
 }
 
