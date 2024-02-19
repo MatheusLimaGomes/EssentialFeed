@@ -37,7 +37,7 @@ extension EssentialFeedAPIEndToEndTests {
 
     private func getFeedResult(file: StaticString = #filePath, line: UInt = #line) -> FeedLoader.Result? {
         let testServerURL = URL(string: "https://essentialdeveloper.com/feed-case-study/test-api/feed")!
-        let client = URLSessionHTTPClient()
+        let client = URLSessionHTTPClient(session: URLSession(configuration: .ephemeral))
         let loader = RemoteFeedLoader(client: client, url: testServerURL)
         trackForMemoryLeaks(instance: client, file: file, line: line)
         trackForMemoryLeaks(instance: loader, file: file, line: line)
