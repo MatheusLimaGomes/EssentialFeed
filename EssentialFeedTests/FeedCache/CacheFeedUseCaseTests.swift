@@ -11,6 +11,8 @@ import EssentialFeed
 class FeedStore {
     var deleteCachedFeedCallCount = 0
     var insertCallCount = 0
+    var insertions = [(items: [FeedItem], timestamp: Date)]()
+    
     typealias DeletionCompletions = (Error?) -> Void
     private var deletionCompletion = [DeletionCompletions]()
     func deleteCachedFeed(completion: @escaping DeletionCompletions) {
@@ -24,20 +26,22 @@ class FeedStore {
     func completeDeletionSuccessfully(at index: Int = 0) {
         deletionCompletion[index](nil)
     }
-    func insert(_ items: [FeedItem]) {
-        insertCallCount += 1
+    func insert(_ items: [FeedItem], timestamp: Date) {
+        insertions.append((items, timestamp))
     }
 }
 
 class LocalFeedLoader {
     private let store: FeedStore
-    init(store: FeedStore) {
+    private let currentDate: () -> Date
+    init(store: FeedStore, currentDate: @escaping () -> Date) {
         self.store = store
+        self.currentDate = currentDate
     }
     func save(_ items: [FeedItem]) {
         store.deleteCachedFeed { [unowned self] error in
             if error == nil {
-                store.insert(items)
+                store.insert(items, timestamp: currentDate())
             }
         }
     }
@@ -78,9 +82,21 @@ final class CacheFeedUseCaseTests: XCTestCase {
         sut.save(items)
         store.completeDeletionSuccessfully()
         
-        XCTAssertEqual(store.insertCallCount, 1)
+        XCTAssertEqual(store.insertions.count, 1)
     }
     
+    func test_save_requestsNewCacheInsertionWithTimestampOnSuccessfulDeletion() {
+        let timestamp = Date()
+        let items = [uniqueItem(), uniqueItem()]
+        let (sut, store) = makeSUT { timestamp }
+        
+        sut.save(items)
+        store.completeDeletionSuccessfully()
+        
+        XCTAssertEqual(store.insertions.count, 1)
+        XCTAssertEqual(store.insertions.first?.items, items)
+        XCTAssertEqual(store.insertions.first?.timestamp, timestamp)
+    }
     // MARK: - Helpers
     func uniqueItem() -> FeedItem {
         FeedItem(id: UUID(), description: "any", location: "any", imageURL: anyURL())
@@ -91,9 +107,9 @@ final class CacheFeedUseCaseTests: XCTestCase {
     private func anyNSError(code: Int = 0) -> NSError {
         NSError(domain: "any error", code: code)
     }
-    private func makeSUT() -> (sut: LocalFeedLoader, store: FeedStore) {
+    private func makeSUT(currentDate: @escaping () -> Date = Date.init) -> (sut: LocalFeedLoader, store: FeedStore) {
         let store = FeedStore()
-        let sut = LocalFeedLoader(store: store)
+        let sut = LocalFeedLoader(store: store, currentDate: currentDate)
         return (sut, store)
     }
 }
