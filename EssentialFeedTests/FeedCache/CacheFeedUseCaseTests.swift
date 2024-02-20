@@ -15,8 +15,9 @@ class LocalFeedLoader {
         self.store = store
         self.currentDate = currentDate
     }
-    func save(_ items: [FeedItem]) {
+    func save(_ items: [FeedItem], completion: @escaping (Error?) -> Void) {
         store.deleteCachedFeed { [unowned self] error in
+            completion(error)
             if error == nil {
                 store.insert(items, timestamp: currentDate())
             }
@@ -66,7 +67,7 @@ final class CacheFeedUseCaseTests: XCTestCase {
         let (sut, store) = makeSUT()
         trackForMemoryLeaks(instance: sut, file: file, line: line)
         trackForMemoryLeaks(instance: store, file: file, line: line)
-        sut.save(items)
+        sut.save(items, completion: {_ in})
         
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed])
     }
@@ -76,7 +77,7 @@ final class CacheFeedUseCaseTests: XCTestCase {
         let (sut, store) = makeSUT()
         let deletionError = anyNSError()
         
-        sut.save(items)
+        sut.save(items, completion: {_ in})
         store.completeDeletion(with: deletionError)
         
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed])
@@ -87,11 +88,30 @@ final class CacheFeedUseCaseTests: XCTestCase {
         let items = [uniqueItem(), uniqueItem()]
         let (sut, store) = makeSUT { timestamp }
         
-        sut.save(items)
+        sut.save(items, completion: {_ in})
         store.completeDeletionSuccessfully()
         
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed, .insert(items, timestamp)])
     }
+    
+    
+    func test_save_failOnDeletionError() {
+        let items = [uniqueItem(), uniqueItem()]
+        let (sut, store) = makeSUT()
+        let deletionError = anyNSError()
+        let exp = expectation(description: "Wait for save completion")
+        
+        var receivedError: Error?
+        sut.save(items) { error in
+            receivedError = error
+            exp.fulfill()
+        }
+        store.completeDeletion(with: deletionError)
+        waitForExpectations(timeout: 0.1)
+        
+        XCTAssertEqual(receivedError as NSError?, deletionError)
+    }
+    
     // MARK: - Helpers
     func uniqueItem() -> FeedItem {
         FeedItem(id: UUID(), description: "any", location: "any", imageURL: anyURL())
