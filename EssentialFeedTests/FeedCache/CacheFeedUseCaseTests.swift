@@ -27,13 +27,13 @@ class LocalFeedLoader {
     func save(_ items: [FeedItem], completion: @escaping (Error?) -> Void) {
         store.deleteCachedFeed { [weak self] error in
             guard let self = self else { return }
-            if error == nil {
+            if let cacheDeletionError = error {
+                completion(cacheDeletionError)
+            } else {
                 self.store.insert(items, timestamp: self.currentDate()) { [weak self] error in
                     guard self != nil else { return }
                     completion(error)
                 }
-            } else {
-                completion(error)
             }
         }
     }
@@ -43,14 +43,14 @@ class CacheFeedUseCaseTests: XCTestCase {
     
     func test_init_doesNotMessageStoreUponCreation() {
         let (_, store) = makeSUT()
-
+        
         XCTAssertEqual(store.receivedMessages, [])
     }
     
     func test_save_requestsCacheDeletion() {
         let items = [uniqueItem(), uniqueItem()]
         let (sut, store) = makeSUT()
-
+        
         sut.save(items) { _ in }
         
         XCTAssertEqual(store.receivedMessages, [.deleteCachedFeed])
@@ -124,7 +124,7 @@ class CacheFeedUseCaseTests: XCTestCase {
         store.completeDeletionSuccessfully()
         sut = nil
         store.completeInsertion(with: anyNSError())
-
+        
         XCTAssertTrue(receivedResults.isEmpty)
     }
     
@@ -167,7 +167,7 @@ class CacheFeedUseCaseTests: XCTestCase {
     private func anyNSError() -> NSError {
         return NSError(domain: "any error", code: 0)
     }
-
+    
     private class FeedStoreSpy: FeedStore {
         
         enum ReceivedMessage: Equatable {
@@ -179,7 +179,7 @@ class CacheFeedUseCaseTests: XCTestCase {
         
         private var deletionCompletions = [DeletionCompletion]()
         private var insertionCompletions = [InsertionCompletion]()
-
+        
         func deleteCachedFeed(completion: @escaping DeletionCompletion) {
             deletionCompletions.append(completion)
             receivedMessages.append(.deleteCachedFeed)
