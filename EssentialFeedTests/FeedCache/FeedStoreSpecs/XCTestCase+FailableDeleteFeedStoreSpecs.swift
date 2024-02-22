@@ -11,6 +11,6 @@ import EssentialFeed
 extension FailableDeleteFeedStoreSpecs where Self: XCTestCase {
     func assertThatDeleteDeliverErrorOnDeletionError(on sut: FeedStore) {
         deleteCache(from: sut)
-        expect(sut: sut, toRetrieve: .empty)
+        expect(sut: sut, toRetrieve: .success(.none))
     }
 }
