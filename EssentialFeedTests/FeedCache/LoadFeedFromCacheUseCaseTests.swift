@@ -127,9 +127,7 @@ final class LoadFeedFromCacheUseCaseTests: XCTestCase {
         
         var receivedResults = [LocalFeedLoader.LoadResult]()
         sut?.load {
-            if let result = $0 {
-                receivedResults.append(result)
-            }
+            receivedResults.append($0)
         }
         
         sut = nil
@@ -158,7 +156,7 @@ final class LoadFeedFromCacheUseCaseTests: XCTestCase {
             case let (.failure(receivedError), .failure(expectedError)):
                 XCTAssertEqual(receivedError as NSError, expectedError as NSError, file: file, line: line)
             default:
-                XCTFail("Expected result \(expectedResult), got \(receivedResult!) instead.", file: file, line: line)
+                XCTFail("Expected result \(expectedResult), got \(receivedResult) instead.", file: file, line: line)
             }
             exp.fulfill()
         }
