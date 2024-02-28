@@ -124,7 +124,6 @@ final class LoadFeedFromCacheUseCaseTests: XCTestCase {
         store.completeRetrievalWithEmptyCache()
 
         XCTAssertTrue(receivedResults.isEmpty)
-        
     }
     // MARK: - HELPERS
     
