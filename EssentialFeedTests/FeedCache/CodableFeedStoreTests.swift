@@ -108,6 +108,17 @@ final class CodableFeedStoreTests: XCTestCase {
         
         expect(sut: sut, toRetrieveTwice: .failure(anyNSError()))
     }
+    func test_insert_overridesPreviouslyIsertedCacheValues() {
+        let sut = makeSUT()
+        let firstInserctionError = insert((feed: uniqueImageFeed().local, timestamp: Date()), to: sut)
+        XCTAssertNil(firstInserctionError, "Expected to insert cache succesfully")
+        
+        let latestFeed = uniqueImageFeed().local
+        let latesTimestamp = Date()
+        let latestInsertionError = insert((feed: latestFeed, timestamp: latesTimestamp), to: sut)
+        XCTAssertNil(latestInsertionError, "Expected to insert cache succesfully")
+        expect(sut: sut, toRetrieve: .found(feed: latestFeed, timestamp: latesTimestamp))
+    }
 }
 
 // MARK: - Helpers
@@ -118,13 +129,18 @@ extension CodableFeedStoreTests {
         trackForMemoryLeaks(instance: sut, file: file, line: line)
         return sut
     }
-    private func insert(_ cache: (feed:  [LocalFeedImage], timestamp: Date), to sut: CodableFeedStore) {
+    
+    @discardableResult
+    private func insert(_ cache: (feed:  [LocalFeedImage], timestamp: Date), to sut: CodableFeedStore) -> Error? {
         let exp = expectation(description: "Wait for cache insertion")
-        sut.insert(cache.feed, timestamp: cache.timestamp) { insertionError in
-            XCTAssertNil(insertionError, "Expected feed to be inserted successfully.")
+        var insertionError: Error?
+        sut.insert(cache.feed, timestamp: cache.timestamp) { receivedInsertionError in
+            insertionError = receivedInsertionError
+            XCTAssertNil(receivedInsertionError, "Expected feed to be inserted successfully.")
             exp.fulfill()
         }
         wait(for: [exp], timeout: 1.0)
+        return insertionError
     }
     private func expect(sut: CodableFeedStore, toRetrieveTwice expectedResult: RetrieveCachedFeedResult, file: StaticString = #filePath, line: UInt = #line) {
         expect(sut: sut, toRetrieve: expectedResult, file: file, line: line)
