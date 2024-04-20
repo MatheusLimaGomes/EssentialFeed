@@ -7,7 +7,7 @@
 		<key>CI.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>2</integer>
+			<integer>1</integer>
 		</dict>
 		<key>EssentialFeed.xcscheme_^#shared#^_</key>
 		<dict>
@@ -19,9 +19,24 @@
 			<key>orderHint</key>
 			<integer>1</integer>
 		</dict>
+		<key>EssentialFeedCacheIntegrationTests 1.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>EssentialFeedCacheIntegrationTests.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>7B2E87DF2BD414FA00C67B4A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>7BE179602B717C6D00DDE6A3</key>
 		<dict>
 			<key>primary</key>
