@@ -11,7 +11,6 @@ import EssentialFeed
 import EssentialFeediOS
 
 final class FeedViewControllerTests: XCTestCase {
-
     func test_loadFeedActions_requestFeedFromLoader() {
         let (sut, loader) = makeSUT()
         XCTAssertEqual(loader.loaderCallCount, 0, "Expected no loading requests before view is loaded.")
@@ -51,8 +50,72 @@ final class FeedViewControllerTests: XCTestCase {
         
         XCTAssertFalse(sut.isShowingTheLoadingIndicator, "Expected no loading feed indicator once loading is completed")
     }
-    
+    func test_loadFeedCompletion_rendersSuccessfullyLoadedFeed() {
+        let image0 = makeImage(description: "any description", location: "any location")
+        let image1 = makeImage(description: nil, location: "another location")
+        let image2 = makeImage(description: "another description", location: nil)
+        let image3 = makeImage(description: nil, location: nil)
+        
+        let (sut, loader) = makeSUT()
+        
+        sut.simulateAppearance()
+        
+        assertThat(sut, isRendering: [])
+        
+        loader.completeFeedLoading(with: [image0], at: 0)
+        
+        assertThat(sut, isRendering: [image0])
+        
+        let images = [image0, image1, image2, image3]
+        sut.simulateUserInitiatedFeedReload()
+        loader.completeFeedLoading(with: images, at: 1)
+        
+        assertThat(sut, isRendering: images)
+    }
     // MARK: - Helpers
+    private func assertThat(_ sut: FeedViewController, isRendering feed: [FeedImage],file: StaticString = #filePath,
+                            line: UInt = #line) {
+        guard sut.numberOfRenderedFeedImageViews() == feed.count else {
+            return XCTFail("Expected \(feed.count) images, got \(sut.numberOfRenderedFeedImageViews()) instead.", file: file, line: line)
+        }
+        feed.enumerated().forEach { index, image in
+            assertThat(sut, hasViewConfiguredFor: image, at: index)
+        }
+    }
+    private func assertThat(
+        _ sut: FeedViewController,
+        hasViewConfiguredFor image: FeedImage,
+        at index: Int,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let view = sut.feedImageView(at: index)
+        guard let cell = view as? FeedImageCell else { return XCTFail("Expected \(FeedImageCell.self) instance, got \(String(describing: view)) instead", file: file, line: line) }
+        
+        let shouldLocationBeVisible = (image.location != nil)
+        XCTAssertEqual(
+            cell.isShowingLocation,
+            shouldLocationBeVisible,
+            "Expected 'isShowingLocation' to be \(shouldLocationBeVisible) for image view at index (\(index)).",
+            file: file,
+            line: line
+        )
+        XCTAssertEqual(
+            cell.locationText,
+            image.location,
+            "Expected location text to be \(String(describing: (image.location))) for image view at index (\(index)).",
+            file: file,
+            line: line
+        )
+        XCTAssertEqual(
+            cell.descriptionText,
+            image.description,
+            "Expected location text to be \(String(describing: (image.description))) for image view at index (\(index)).",
+            file: file,
+            line: line
+        )
+    }
+    
     private func makeSUT(
         file: StaticString = #filePath,
         line: UInt = #line
@@ -63,6 +126,18 @@ final class FeedViewControllerTests: XCTestCase {
         trackForMemoryLeaks(instance: sut, file: file, line: line)
         return (sut, loader)
     }
+    private func makeImage(
+        description: String?,
+        location: String?,
+        url: URL = URL(string: "https://any-url.com")!
+    ) -> FeedImage {
+        return FeedImage(
+            id: UUID(),
+            description: description,
+            location: location,
+            url: url
+        )
+    }
     private class LoaderSpy: FeedLoader {
         private var completions = [(FeedLoader.Result) -> Void]()
         var loaderCallCount: Int {
@@ -71,12 +146,24 @@ final class FeedViewControllerTests: XCTestCase {
         func load(completion: @escaping (FeedLoader.Result) -> Void) {
             completions.append(completion)
         }
-        func completeFeedLoading(at index: Int) {
-            completions[index](.success([]))
+        func completeFeedLoading(with feed: [FeedImage] = [], at index: Int) {
+            completions[index](.success(feed))
         }
     }
 }
 private extension FeedViewController {
+    func numberOfRenderedFeedImageViews() -> Int {
+        return tableView.numberOfRows(inSection: feedImageSection)
+    }
+    
+    func feedImageView(at row: Int) -> UITableViewCell? {
+        let ds = tableView.dataSource
+        let index = IndexPath(row: row, section: feedImageSection)
+        return ds?.tableView(tableView, cellForRowAt: index)
+    }
+    var feedImageSection: Int {
+        return 0
+    }
     func simulateUserInitiatedFeedReload() {
         refreshControl?.simulatePullToRefresh()
     }
@@ -102,5 +189,16 @@ private extension FeedViewController {
             }
         }
         refreshControl = fake
+    }
+}
+private extension FeedImageCell {
+    var isShowingLocation: Bool {
+        return !locationContainer.isHidden
+    }
+    var locationText: String? {
+        return locationLabel.text
+    }
+    var descriptionText: String? {
+        return descriptionLabel.text
     }
 }
