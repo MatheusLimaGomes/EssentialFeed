@@ -166,17 +166,30 @@ final class FeedViewControllerTests: XCTestCase {
         
         let view0 = sut.simulateFeedImageViewVisible(at: 0)!
         let view1 = sut.simulateFeedImageViewVisible(at: 1)!
-        XCTAssertEqual(view0.isShowingRetryButton, false, "Expected no retry action for the first view while loading first image.")
-        XCTAssertEqual(view1.isShowingRetryButton, false, "Expected no retry action for the second view while loading second image.")
+        XCTAssertEqual(view0.isShowingRetryAction, false, "Expected no retry action for the first view while loading first image.")
+        XCTAssertEqual(view1.isShowingRetryAction, false, "Expected no retry action for the second view while loading second image.")
         
         let imageData0 = UIImage.make(withColor: .red).pngData()!
         loader.completeImageLoading(with: imageData0, at: 0)
-        XCTAssertEqual(view0.isShowingRetryButton, false, "Expected no retry action for the first view while loading first image.")
-        XCTAssertEqual(view1.isShowingRetryButton, false, "Expected no retry action for the second view while loading second image.")
+        XCTAssertEqual(view0.isShowingRetryAction, false, "Expected no retry action for the first view once the loading image completes successfuly.")
+        XCTAssertEqual(view1.isShowingRetryAction, false, "Expected no retry action for the second view while loading second image.")
         
         loader.completeImageLoadingWirhError(at: 1)
-        XCTAssertEqual(view0.isShowingRetryButton, false, "Expected no retry action for the first view while loading first image.")
-        XCTAssertEqual(view1.isShowingRetryButton, true, "Expected a retry action for the second view once  second image loading completes with error.")
+        XCTAssertEqual(view0.isShowingRetryAction, false, "Expected no retry action for the first view while loading first image.")
+        XCTAssertEqual(view1.isShowingRetryAction, true, "Expected a retry action for the second view once  second image loading completes with error.")
+    }
+    func test_feedImageViewRetryButton_isVisibleOnInvalidImageData() {
+        let (sut, loader) = makeSUT()
+        sut.simulateAppearance()
+        loader.completeFeedLoading(with: [makeImage()])
+        
+        let view = sut.simulateFeedImageViewVisible(at: 0)
+        XCTAssertEqual(view?.isShowingRetryAction, false, "Expected no retry action for the first view while loading first image.")
+        
+        let invalidImageData = Data("Invalid image data".utf8)
+        loader.completeImageLoading(with: invalidImageData, at: 0)
+        XCTAssertEqual(view?.isShowingRetryAction, true, "Expected a retry action once first view completes with invalid image data")
+        
     }
     // MARK: - Helpers -
     private func assertThat(_ sut: FeedViewController, isRendering feed: [FeedImage],file: StaticString = #filePath,
@@ -354,7 +367,7 @@ private extension FeedImageCell {
     var renderedImage: Data? {
         return feedImageView.image?.pngData()
     }
-    var isShowingRetryButton: Bool {
+    var isShowingRetryAction: Bool {
         return !feedImageRetryButton.isHidden
     }
 }
