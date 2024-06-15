@@ -237,6 +237,20 @@ final class FeedViewControllerTests: XCTestCase {
         XCTAssertEqual(view?.isShowingRetryAction, true, "Expected a retry action once first view completes with invalid image data")
         
     }
+    func test_feedImageView_preloadsImageURLWhenNearVisible() {
+        let (sut, loader) = makeSUT()
+        let image0 = makeImage(url: URL(string: "https://a-0-url.com")!)
+        let image1 = makeImage(url: URL(string: "https://a-1-url.com")!)
+        
+        sut.simulateAppearance()
+        loader.completeFeedLoading(with: [image0, image1])
+        XCTAssertEqual(loader.loadedImageURLs, [], "Expected no image URL request until image is near visible.")
+        
+        sut.simulateFeedImageNearVisible(at: 0)
+        XCTAssertEqual(loader.loadedImageURLs, [image0.url], "Expected first image URL request once first image is near visible.")
+        sut.simulateFeedImageNearVisible(at: 1)
+        XCTAssertEqual(loader.loadedImageURLs, [image0.url, image1.url], "Expected second image URL request once second image is near visible.")
+    }
     // MARK: - Helpers -
     private func assertThat(_ sut: FeedViewController, isRendering feed: [FeedImage],file: StaticString = #filePath,
                             line: UInt = #line) {
@@ -383,6 +397,11 @@ private extension FeedViewController {
         let delegate = tableView.delegate
         let index = IndexPath(row: row, section: feedImageSection)
         delegate?.tableView?(tableView, didEndDisplaying: view, forRowAt: index)
+    }
+    func simulateFeedImageNearVisible(at row: Int) {
+        let ds = tableView.prefetchDataSource
+        let index = IndexPath(row: row, section: feedImageSection)
+        ds?.tableView(tableView, prefetchRowsAt: [index])
     }
     func replaceRefreshControlWithFakeForiOS17Support() {
         let fake = FakeRefreshControl()
