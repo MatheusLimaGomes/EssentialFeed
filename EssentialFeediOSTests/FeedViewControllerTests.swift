@@ -180,6 +180,52 @@ final class FeedViewControllerTests: XCTestCase {
     }
     func test_feedImageViewRetryButton_isVisibleOnInvalidImageData() {
         let (sut, loader) = makeSUT()
+        let image0 = makeImage(url: URL(string: "https://a-0-url.com")!)
+        let image1 = makeImage(url: URL(string: "https://a-1-url.com")!)
+        
+        sut.simulateAppearance()
+        loader.completeFeedLoading(with: [image0, image1])
+        
+        let view0 = sut.simulateFeedImageViewVisible(at: 0)
+        let view1 = sut.simulateFeedImageViewVisible(at: 1)
+        XCTAssertEqual(loader.loadedImageURLs, [image0.url, image1.url], "Expected two image URL request for the two visible views.")
+        
+        loader.completeImageLoadingWirhError(at: 0)
+        loader.completeImageLoadingWirhError(at: 1)
+        XCTAssertEqual(
+            loader.loadedImageURLs,
+            [
+                image0.url,
+                image1.url
+            ],
+            "Expected only two image URL request before the retry action."
+        )
+        
+        view0?.simulateRetryAction()
+        XCTAssertEqual(
+            loader.loadedImageURLs,
+            [
+                image0.url,
+                image1.url,
+                image0.url
+            ],
+            "Expected third image URL request after the first retry action called."
+        )
+        
+        view1?.simulateRetryAction()
+        XCTAssertEqual(
+            loader.loadedImageURLs,
+            [
+                image0.url,
+                image1.url,
+                image0.url,
+                image1.url
+            ],
+            "Expected fourth image URL request after the first retry action called."
+        )
+    }
+    func test_feedImageViewRetryButton_retriesImageLoad() {
+        let (sut, loader) = makeSUT()
         sut.simulateAppearance()
         loader.completeFeedLoading(with: [makeImage()])
         
@@ -369,5 +415,8 @@ private extension FeedImageCell {
     }
     var isShowingRetryAction: Bool {
         return !feedImageRetryButton.isHidden
+    }
+    func simulateRetryAction() {
+        feedImageRetryButton.simulateTap()
     }
 }
