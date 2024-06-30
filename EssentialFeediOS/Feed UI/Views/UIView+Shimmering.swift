@@ -9,12 +9,21 @@ import UIKit
 
 extension UIView {
     public var isShimmering: Bool {
-        return layer.mask?.animation(forKey: shimmeringAnimationKey) != nil
+        set {
+            if newValue {
+                startShimmering()
+            } else {
+                stopShimmering()
+            }
+        }
+        get {
+            return layer.mask?.animation(forKey: shimmeringAnimationKey) != nil
+        }
     }
     private var shimmeringAnimationKey: String {
         return "shimmer"
     }
-    func startShimmering() {
+    private func startShimmering() {
         let white = UIColor.white.cgColor
         let alpha = UIColor.white.withAlphaComponent(0.75).cgColor
         let width = bounds.width
@@ -35,7 +44,7 @@ extension UIView {
         animation.repeatCount = .infinity
         gradient.add(animation, forKey: shimmeringAnimationKey)
     }
-    func stopShimmering() {
+    private func stopShimmering() {
         layer.mask = nil
     }
 }
